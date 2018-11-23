@@ -938,27 +938,56 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "optimistic", lockVersion: number): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "optimistic", lockVersion: Date): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "pessimistic_read"|"pessimistic_write"): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
-    setLock(lockMode: "optimistic"|"pessimistic_read"|"pessimistic_write", lockVersion?: number|Date): this {
+    setLock(lockMode: any, lockVersion?: any): this {
+        return this.lockMode(lockMode, lockVersion);
+    }
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic", lockVersion: number): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic", lockVersion: Date): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "pessimistic_read"|"pessimistic_write"): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic"|"pessimistic_read"|"pessimistic_write", lockVersion?: number|Date): this {
         this.expressionMap.lockMode = lockMode;
         this.expressionMap.lockVersion = lockVersion;
         return this;
-
     }
 
     /**

@@ -17,6 +17,11 @@ export interface PostgresConnectionOptions extends BaseConnectionOptions, Postgr
     readonly schema?: string;
 
     /**
+     * Disable built-in connection pooling
+     */
+    readonly disablePooling?: boolean;
+
+    /**
      * Replication setup.
      */
     readonly replication?: {

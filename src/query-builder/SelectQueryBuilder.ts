@@ -959,27 +959,56 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "optimistic", lockVersion: number): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "optimistic", lockVersion: Date): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "pessimistic_read"|"pessimistic_write"|"dirty_read"|"pessimistic_partial_write"|"pessimistic_write_or_fail"|"for_no_key_update"): this;
 
     /**
      * Sets locking mode.
+     * 
+     * @deprecated Use `lockMode`
      */
     setLock(lockMode: "optimistic"|"pessimistic_read"|"pessimistic_write"|"dirty_read"|"pessimistic_partial_write"|"pessimistic_write_or_fail"|"for_no_key_update", lockVersion?: number|Date): this {
+        return this.lockMode(lockMode as any, lockVersion as any);
+    }
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic", lockVersion: number): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic", lockVersion: Date): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "pessimistic_read"|"pessimistic_write"|"dirty_read"): this;
+
+    /**
+     * Sets locking mode.
+     */
+    lockMode(lockMode: "optimistic"|"pessimistic_read"|"pessimistic_write"|"dirty_read"|"pessimistic_partial_write"|"pessimistic_write_or_fail"|"for_no_key_update", lockVersion?: number|Date): this {
         this.expressionMap.lockMode = lockMode;
         this.expressionMap.lockVersion = lockVersion;
         return this;
-
     }
 
     /**

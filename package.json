@@ -1,8 +1,8 @@
 {
-  "name": "typeorm",
+  "name": "@loyaltylion/typeorm",
   "private": true,
   "version": "0.2.9",
-  "description": "Data-Mapper ORM for TypeScript, ES7, ES6, ES5. Supports MySQL, PostgreSQL, MariaDB, SQLite, MS SQL Server, Oracle, MongoDB databases.",
+  "description": "loyaltylion fork",
   "license": "MIT",
   "readmeFilename": "README.md",
   "author": {
@@ -11,10 +11,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typeorm/typeorm.git"
+    "url": "https://github.com/loyaltylion/typeorm.git"
   },
   "bugs": {
-    "url": "https://github.com/typeorm/typeorm/issues"
+    "url": "https://github.com/loyaltylion/typeorm/issues"
   },
   "tags": [
     "orm",

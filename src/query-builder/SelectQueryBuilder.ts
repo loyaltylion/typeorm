@@ -1020,6 +1020,16 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
     }
 
     /**
+     * Set a lock clause, passed directly into the query.
+     * e.g. `FOR UPDATE NOWAIT`.
+     * If set, will override `lockMode`.
+     */
+    lock(clause: string): this {
+        this.expressionMap.lockClause = clause;
+        return this;
+    }
+
+    /**
      * Gets first raw result returned by execution of generated query builder sql.
      */
     async getRawOne<T = any>(): Promise<T> {
@@ -1055,13 +1065,6 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
         } catch (error) {
 
-            // rollback transaction if we started it
-            if (transactionStartedByUs) {
-                try {
-                    await queryRunner.rollbackTransaction();
-                } catch (rollbackError) { }
-            }
-            throw error;
 
         } finally {
             if (queryRunner !== this.queryRunner) { // means we created our own query runner
@@ -1690,6 +1693,11 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
      */
     protected createLockExpression(): string {
         const driver = this.connection.driver;
+
+        if (this.expressionMap.lockClause) {
+            return ` ${this.expressionMap.lockClause}`;
+        }
+
         switch (this.expressionMap.lockMode) {
             case "pessimistic_read":
                 if (driver instanceof MysqlDriver || driver instanceof AuroraDataApiDriver) {

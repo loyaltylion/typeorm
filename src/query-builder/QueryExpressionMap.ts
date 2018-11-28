@@ -164,6 +164,12 @@ export class QueryExpressionMap {
     withDeleted: boolean = false;
 
     /**
+     * Locking clause.
+     * 
+     */
+    lockClause?: string;
+
+    /**
      * Parameters used to be escaped in final query.
      */
     parameters: ObjectLiteral = {};

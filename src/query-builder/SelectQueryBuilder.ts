@@ -1012,13 +1012,21 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
     }
 
     /**
-     * Disables the global condition of "non-deleted" for the entity with delete date columns.
      */
     withDeleted(): this {
         this.expressionMap.withDeleted = true;
         return this;
     }
 
+    /**
+     * Set a lock clause, passed directly into the query.
+     * If set, will override `lockMode`.
+     */
+    lock(clause: string): this {
+        this.expressionMap.lockClause = clause;
+        return this;
+    }
+    
     /**
      * Gets first raw result returned by execution of generated query builder sql.
      */
@@ -1690,6 +1698,11 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
      */
     protected createLockExpression(): string {
         const driver = this.connection.driver;
+
+        if (this.expressionMap.lockClause) {
+            return ` ${this.expressionMap.lockClause}`;
+        }
+
         switch (this.expressionMap.lockMode) {
             case "pessimistic_read":
                 if (driver instanceof MysqlDriver || driver instanceof AuroraDataApiDriver) {

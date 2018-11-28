@@ -162,6 +162,12 @@ export class QueryExpressionMap {
      * By default the soft-deleted rows are not included.
      */
     withDeleted: boolean = false;
+     
+    /** 
+     * Locking clause.
+     * 
+     */
+    lockClause?: string;
 
     /**
      * Parameters used to be escaped in final query.

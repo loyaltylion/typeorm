@@ -153,6 +153,12 @@ export class QueryExpressionMap {
     lockVersion?: number|Date;
 
     /**
+     * Locking clause.
+     * 
+     */
+    lockClause?: string;
+
+    /**
      * Parameters used to be escaped in final query.
      */
     parameters: ObjectLiteral = {};

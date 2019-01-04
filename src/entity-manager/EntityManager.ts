@@ -36,6 +36,7 @@ import {OracleDriver} from "../driver/oracle/OracleDriver";
 import {FindConditions} from "../find-options/FindConditions";
 import {IsolationLevel} from "../driver/types/IsolationLevel";
 import {ObjectUtils} from "../util/ObjectUtils";
+import {TransactionalEntityManager} from "./TransactionalEntityManager";
 
 /**
  * Entity manager supposed to work with any entity, automatically find its repository and call its methods,
@@ -93,21 +94,21 @@ export class EntityManager {
      * Wraps given function execution (and all operations made there) in a transaction.
      * All database operations must be executed using provided entity manager.
      */
-    async transaction<T>(runInTransaction: (entityManager: EntityManager) => Promise<T>): Promise<T>;
+    async transaction<T>(runInTransaction: (entityManager: TransactionalEntityManager) => Promise<T>): Promise<T>;
 
     /**
      * Wraps given function execution (and all operations made there) in a transaction.
      * All database operations must be executed using provided entity manager.
      */
-    async transaction<T>(isolationLevel: IsolationLevel, runInTransaction: (entityManager: EntityManager) => Promise<T>): Promise<T>;
+    async transaction<T>(isolationLevel: IsolationLevel, runInTransaction: (entityManager: TransactionalEntityManager) => Promise<T>): Promise<T>;
 
     /**
      * Wraps given function execution (and all operations made there) in a transaction.
      * All database operations must be executed using provided entity manager.
      */
     async transaction<T>(
-        isolationOrRunInTransaction: IsolationLevel | ((entityManager: EntityManager) => Promise<T>),
-        runInTransactionParam?: (entityManager: EntityManager) => Promise<T>
+        isolationOrRunInTransaction: IsolationLevel | ((entityManager: TransactionalEntityManager) => Promise<T>),
+        runInTransactionParam?: (entityManager: TransactionalEntityManager) => Promise<T>
     ): Promise<T> {
 
         const isolation = typeof isolationOrRunInTransaction === "string" ? isolationOrRunInTransaction : undefined;
@@ -136,7 +137,7 @@ export class EntityManager {
               } else {
                 await queryRunner.startTransaction();
               }
-            const result = await runInTransaction(queryRunner.manager);
+            const result = await runInTransaction(queryRunner.manager as TransactionalEntityManager);
             await queryRunner.commitTransaction();
             return result;
 

@@ -105,6 +105,7 @@ export * from "./logger/SimpleConsoleLogger";
 export * from "./logger/FileLogger";
 export * from "./metadata/EntityMetadata";
 export * from "./entity-manager/EntityManager";
+export * from "./entity-manager/TransactionalEntityManager";
 export * from "./repository/AbstractRepository";
 export * from "./repository/Repository";
 export * from "./repository/BaseEntity";

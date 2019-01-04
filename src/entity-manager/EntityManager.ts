@@ -35,6 +35,7 @@ import {OracleDriver} from "../driver/oracle/OracleDriver";
 import {FindConditions} from "../find-options/FindConditions";
 import {IsolationLevel} from "../driver/types/IsolationLevel";
 import {ObjectUtils} from "../util/ObjectUtils";
+import {TransactionalEntityManager} from "./TransactionalEntityManager";
 
 /**
  * Entity manager supposed to work with any entity, automatically find its repository and call its methods,
@@ -92,11 +93,11 @@ export class EntityManager {
      * Wraps given function execution (and all operations made there) in a transaction.
      * All database operations must be executed using provided entity manager.
      */
-    async transaction<T>(runInTransaction: (entityManger: EntityManager) => Promise<T>): Promise<T>;
-    async transaction<T>(isolationLevel: IsolationLevel, runInTransaction: (entityManger: EntityManager) => Promise<T>): Promise<T>;
+    async transaction<T>(runInTransaction: (entityManger: TransactionalEntityManager) => Promise<T>): Promise<T>;
+    async transaction<T>(isolationLevel: IsolationLevel, runInTransaction: (entityManger: TransactionalEntityManager) => Promise<T>): Promise<T>;
     async transaction<T>(
-        isolationOrRunInTransaction: IsolationLevel | ((entityManger: EntityManager) => Promise<T>),
-        runInTransactionParam?: (entityManger: EntityManager) => Promise<T>
+        isolationOrRunInTransaction: IsolationLevel | ((entityManger: TransactionalEntityManager) => Promise<T>),
+        runInTransactionParam?: (entityManger: TransactionalEntityManager) => Promise<T>
     ): Promise<T> {
 
         const isolation = typeof isolationOrRunInTransaction === "string" ? isolationOrRunInTransaction : undefined;
@@ -125,7 +126,7 @@ export class EntityManager {
               } else {
                 await queryRunner.startTransaction();
               }
-            const result = await runInTransaction(queryRunner.manager);
+            const result = await runInTransaction(queryRunner.manager as TransactionalEntityManager);
             await queryRunner.commitTransaction();
             return result;
 

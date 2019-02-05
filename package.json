@@ -1,7 +1,7 @@
 {
   "name": "@loyaltylion/typeorm",
   "private": true,
-  "version": "0.2.10-3",
+  "version": "0.2.10-4",
   "description": "loyaltylion fork",
   "license": "MIT",
   "readmeFilename": "README.md",

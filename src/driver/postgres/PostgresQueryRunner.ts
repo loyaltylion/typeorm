@@ -145,6 +145,10 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
 
         this.isTransactionActive = true;
         await this.query("START TRANSACTION");
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = true;
         if (isolationLevel) {
             await this.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
         }
@@ -172,6 +176,10 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         const afterBroadcastResult = new BroadcasterResult();
         this.broadcaster.broadcastAfterTransactionCommitEvent(afterBroadcastResult);
         if (afterBroadcastResult.promises.length > 0) await Promise.all(afterBroadcastResult.promises);
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = false;
     }
 
     /**
@@ -192,6 +200,10 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         const afterBroadcastResult = new BroadcasterResult();
         this.broadcaster.broadcastAfterTransactionRollbackEvent(afterBroadcastResult);
         if (afterBroadcastResult.promises.length > 0) await Promise.all(afterBroadcastResult.promises);
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = false;
     }
 
     /**

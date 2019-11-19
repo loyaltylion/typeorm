@@ -1,5 +1,6 @@
 {
   "files.trimFinalNewlines": false,
   "files.insertFinalNewline": false,
-  "files.trimTrailingWhitespace": false
+  "files.trimTrailingWhitespace": false,
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

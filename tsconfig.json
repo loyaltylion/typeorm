@@ -4,7 +4,7 @@
         "outDir": "build/compiled",
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "target": "es2019",
+        "target": "esnext",
         "module": "commonjs",
         "moduleResolution": "node",
         "importHelpers": true,

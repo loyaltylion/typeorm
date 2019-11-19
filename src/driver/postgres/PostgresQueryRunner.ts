@@ -116,15 +116,23 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
     /**
      * Releases used database connection.
      * You cannot use query runner methods once its released.
+     * 
+     * If `error` is truthy the released connection may be removed from the pool
+     * depending on the driver.
      */
-    release(): Promise<void> {
-        if (this.isReleased) {
-            return Promise.resolve();
-        }
-
+    release(error?: any): Promise<void> {
         this.isReleased = true;
-        if (this.releaseCallback)
-            this.releaseCallback();
+
+        if (this.releaseCallback) {
+            // severe errors may indicate an unrecoverable client, e.g. a client
+            // whose connection no longer exists (due to network issues, etc).
+            // the safest thing to do is instruct the pool to remove it, or it
+            // will stick around in the pool indefinitely, breaking every
+            // subsequent query that runs on it
+            const removeFromPool = Boolean(error && error.severity === "FATAL");
+
+            this.releaseCallback(removeFromPool);
+        }
 
         const index = this.driver.connectedQueryRunners.indexOf(this);
         if (index !== -1) this.driver.connectedQueryRunners.splice(index);

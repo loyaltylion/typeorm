@@ -396,11 +396,17 @@ export class Connection {
         const usedQueryRunner = queryRunner || this.createQueryRunner("master");
 
         try {
-            return await usedQueryRunner.query(query, parameters);  // await is needed here because we are using finally
+            const result = await usedQueryRunner.query(query, parameters);
 
-        } finally {
             if (!queryRunner)
                 await usedQueryRunner.release();
+
+            return result;
+        } catch (err) {
+            if (!queryRunner) 
+                await usedQueryRunner.release(err);
+
+            throw err;
         }
     }
 

@@ -124,12 +124,30 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         this.isReleased = true;
 
         if (this.releaseCallback) {
-            // severe errors may indicate an unrecoverable client, e.g. a client
-            // whose connection no longer exists (due to network issues, etc).
-            // the safest thing to do is instruct the pool to remove it, or it
-            // will stick around in the pool indefinitely, breaking every
-            // subsequent query that runs on it
-            const removeFromPool = Boolean(error && error.severity === "FATAL");
+            // we have some options here:
+            //
+            // 1. remove the client from the pool no matter what error we get.
+            //    this will be more inefficient overall, because we'll be
+            //    removing "good" clients, i.e. those which encountered a unique
+            //    violation error (the connection is still good)
+            //
+            // 2. try to determine if it's a "good" error (unique violation etc)
+            //    and if it is, don't remove it from the pool
+            //
+            // 3. try to determine if it's a "bad" error ("connection
+            //    terminated" etc) and, if it is, remove the client from the
+            //    pool
+            //
+            // the error we received is *not* the underlying error, but a
+            // `QueryFailedError` which is constructed by copying all the errors
+            // props. so all we have to go on is the error message and presence
+            // of props
+            //
+            // for this reason, we've decided for now to just be safe and drop a
+            // client which has any error. this will mean more dropped clients,
+            // but we don't expect that to be an issue because they're fairly
+            // cheap pgbouncer connections anyway
+            const removeFromPool = Boolean(error);
 
             this.releaseCallback(removeFromPool);
         }

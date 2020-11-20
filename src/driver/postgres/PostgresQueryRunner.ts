@@ -116,15 +116,41 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
     /**
      * Releases used database connection.
      * You cannot use query runner methods once its released.
+     * 
+     * If `error` is truthy the released connection may be removed from the pool
+     * depending on the driver.
      */
-    release(): Promise<void> {
-        if (this.isReleased) {
-            return Promise.resolve();
-        }
-
+    release(error?: any): Promise<void> {
         this.isReleased = true;
-        if (this.releaseCallback)
-            this.releaseCallback();
+
+        if (this.releaseCallback) {
+            // we have some options here:
+            //
+            // 1. remove the client from the pool no matter what error we get.
+            //    this will be more inefficient overall, because we'll be
+            //    removing "good" clients, i.e. those which encountered a unique
+            //    violation error (the connection is still good)
+            //
+            // 2. try to determine if it's a "good" error (unique violation etc)
+            //    and if it is, don't remove it from the pool
+            //
+            // 3. try to determine if it's a "bad" error ("connection
+            //    terminated" etc) and, if it is, remove the client from the
+            //    pool
+            //
+            // the error we received is *not* the underlying error, but a
+            // `QueryFailedError` which is constructed by copying all the errors
+            // props. so all we have to go on is the error message and presence
+            // of props
+            //
+            // for this reason, we've decided for now to just be safe and drop a
+            // client which has any error. this will mean more dropped clients,
+            // but we don't expect that to be an issue because they're fairly
+            // cheap pgbouncer connections anyway
+            const removeFromPool = Boolean(error);
+
+            this.releaseCallback(removeFromPool);
+        }
 
         const index = this.driver.connectedQueryRunners.indexOf(this);
         if (index !== -1) this.driver.connectedQueryRunners.splice(index);
@@ -145,6 +171,10 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
 
         this.isTransactionActive = true;
         await this.query("START TRANSACTION");
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = true;
         if (isolationLevel) {
             await this.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
         }
@@ -172,6 +202,11 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         const afterBroadcastResult = new BroadcasterResult();
         this.broadcaster.broadcastAfterTransactionCommitEvent(afterBroadcastResult);
         if (afterBroadcastResult.promises.length > 0) await Promise.all(afterBroadcastResult.promises);
+
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = false;
     }
 
     /**
@@ -192,6 +227,11 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         const afterBroadcastResult = new BroadcasterResult();
         this.broadcaster.broadcastAfterTransactionRollbackEvent(afterBroadcastResult);
         if (afterBroadcastResult.promises.length > 0) await Promise.all(afterBroadcastResult.promises);
+
+        // in remus, the LL postgres client checks if it's in a transaction
+        // using this field, if typeorm doesn't set/unset it we can wind up
+        // where legacy code thinks a transaction is active when it's really not
+        this.databaseConnection.activeTransaction = false;
     }
 
     /**
@@ -219,7 +259,6 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
                 case "UPDATE":
                     // for UPDATE and DELETE query additionally return number of affected rows
                     return [result.rows, result.rowCount];
-                    break;
                 default:
                     return result.rows;
             }

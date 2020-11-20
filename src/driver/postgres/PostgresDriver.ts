@@ -2,6 +2,7 @@ import {Driver} from "../Driver";
 import {ConnectionIsNotSetError} from "../../error/ConnectionIsNotSetError";
 import {ObjectLiteral} from "../../common/ObjectLiteral";
 import {DriverPackageNotInstalledError} from "../../error/DriverPackageNotInstalledError";
+import {DriverUtils} from "../DriverUtils";
 import {ColumnMetadata} from "../../metadata/ColumnMetadata";
 import {PostgresQueryRunner} from "./PostgresQueryRunner";
 import {DateUtils} from "../../util/DateUtils";
@@ -291,7 +292,11 @@ export class PostgresDriver implements Driver {
             this.database = this.options.replication.master.database;
 
         } else {
-            this.master = await this.createPool(this.options, this.options);
+            if (this.options.disablePooling) {
+                this.master = undefined;
+            } else {
+                this.master = await this.createPool(this.options, this.options);
+            }
             this.database = this.options.database;
         }
     }
@@ -415,6 +420,11 @@ export class PostgresDriver implements Driver {
      * Closes connection with database.
      */
     async disconnect(): Promise<void> {
+        if (this.options.disablePooling) {
+            await Promise.all(this.connectedQueryRunners.map(queryRunner => queryRunner.release()));
+            return;
+        }
+
         if (!this.master)
             return Promise.reject(new ConnectionIsNotSetError("postgres"));
 
@@ -816,7 +826,22 @@ export class PostgresDriver implements Driver {
      * Used for replication.
      * If replication is not setup then returns default connection's database connection.
      */
-    obtainMasterConnection(): Promise<any> {
+    async obtainMasterConnection(): Promise<any> {
+        if (this.options.disablePooling) {
+            const credentials = DriverUtils.buildDriverOptions(this.options);
+            const options = {
+                host: credentials.host,
+                user: credentials.username,
+                password: credentials.password,
+                database: credentials.database,
+                port: credentials.port,
+                ssl: credentials.ssl,
+            };
+            const connection = new this.postgres.Client(options);
+            await connection.connect();
+            return [connection, () => connection.end()];
+        }
+
         return new Promise((ok, fail) => {
             this.master.connect((err: any, connection: any, release: any) => {
                 err ? fail(err) : ok([connection, release]);

@@ -1065,6 +1065,13 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
         } catch (error) {
 
+            // rollback transaction if we started it
+            if (transactionStartedByUs) {
+                try {
+                    await queryRunner.rollbackTransaction();
+                } catch (rollbackError) { }
+            }
+            throw error;
 
         } finally {
             if (queryRunner !== this.queryRunner) { // means we created our own query runner
